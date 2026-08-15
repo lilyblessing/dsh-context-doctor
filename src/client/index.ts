@@ -32,6 +32,7 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('conversation.input.left', () =>
     ctx.slots.register({
       name: 'conversation.input.left',
+      id: 'context-doctor',
       store,
       locale: NS,
     }, ContextAuditRing))

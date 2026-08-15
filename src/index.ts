@@ -5,6 +5,7 @@
  * - 浏览器半区（`./client`）：composer 圆环 + 展开面板（见 src/client/）
  */
 import type { Context } from '@deepseek-ai/cordis'
+import Schema from '@deepseek-ai/schemastery'
 import { defineTool, type JsonValue } from '@deepseek-ai/dsh-tools'
 // Type-only side-effect imports: pull each package's `declare module '@deepseek-ai/cordis'`
 // Context augmentation (fs / skills / tools / webServer) into this compilation unit.
@@ -29,6 +30,12 @@ export interface Config {
   /** 审计结果缓存时长（毫秒）。默认 60000。 */
   cacheTtlMs?: number
 }
+
+/** Cordis 配置校验 schema（官方约定：导出 Schema，校验失败时插件加载报错）。 */
+export const Config: Schema<Config> = Schema.object({
+  defaultCwd: Schema.string(),
+  cacheTtlMs: Schema.number().min(0),
+})
 
 export function apply(ctx: Context, config: Config = {}): void {
   const deps: AuditDeps = { fs: ctx.fs, skills: ctx.skills, tools: ctx.tools }
