@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactElement } from 'react'
-import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
+import type { PropsLocale, PropsRuntime, PropsStore, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { AuditUiState } from './store.ts'
 import type { createAuditStore } from './store.ts'
@@ -48,12 +48,12 @@ function formatK(tokens: number): string {
   return `${value >= 100 ? Math.round(value) : value.toFixed(1)}k`
 }
 
-function updatedLabel(refreshedAt: number | null): string {
+function updatedLabel(refreshedAt: number | null, t: TranslateNS<typeof NS>): string {
   if (refreshedAt === null) return '—'
   const seconds = Math.max(0, Math.round((Date.now() - refreshedAt) / 1000))
-  if (seconds < 10) return 'just now'
-  if (seconds < 60) return `${seconds}s ago`
-  return `${Math.round(seconds / 60)}m ago`
+  if (seconds < 10) return t('cd.justNow')
+  if (seconds < 60) return t('cd.secondsAgo', { n: seconds })
+  return t('cd.minutesAgo', { n: Math.round(seconds / 60) })
 }
 
 function PulseIcon({ size = 20 }: { size?: number }): ReactElement {
@@ -90,7 +90,7 @@ function BudgetRing({ percent, color }: { percent: number; color: string }): Rea
 
 /** Resident control that replaces the built-in meter just before Send. */
 export function ContextAuditRing(props: ContextAuditRingProps): ReactElement {
-  const { useStore, actions, sessionId } = props
+  const { useStore, actions, sessionId, t } = props
   const state: AuditUiState = useStore(snapshot => snapshot)
   const [open, setOpen] = useState(false)
   const panelId = useId()
@@ -134,45 +134,45 @@ export function ContextAuditRing(props: ContextAuditRingProps): ReactElement {
   const level = state.state === 'error' ? 'red' : healthTone(resident)
   const accent = TONE[level]
   const suggestions = report?.suggestions ?? []
-  const status = state.state === 'error' ? 'Audit failed' : suggestions.length ? 'Review' : 'Healthy'
+  const status = state.state === 'error' ? t('cd.error') : suggestions.length ? t('cd.review') : t('cd.healthy')
 
   return <span data-context-doctor style={dockStyle}>
-    <button type="button" onClick={() => setOpen(value => !value)} title="Context Doctor" aria-label="Context Doctor" aria-expanded={open} aria-controls={panelId} style={triggerStyle}>
+    <button type="button" onClick={() => setOpen(value => !value)} title={t('cd.title')} aria-label={t('cd.title')} aria-expanded={open} aria-controls={panelId} style={triggerStyle}>
       <span style={{ color: accent, display: 'inline-flex' }}><PulseIcon size={17} /></span>
-      <span style={triggerLabelStyle}>Context Doctor</span>
+      <span style={triggerLabelStyle}>{t('cd.title')}</span>
       <span aria-hidden="true" style={{ ...triggerStatusStyle, background: accent }} />
     </button>
 
-    {open && <section id={panelId} role="dialog" aria-label="Context Doctor" style={panelStyle}>
+    {open && <section id={panelId} role="dialog" aria-label={t('cd.title')} style={panelStyle}>
       <header style={headerStyle}>
         <span style={{ color: TONE.mint, display: 'inline-flex' }}><PulseIcon size={31} /></span>
         <div>
-          <h2 style={titleStyle}>Context Doctor</h2>
-          <p style={subtitleStyle}>Context budget audit</p>
+          <h2 style={titleStyle}>{t('cd.title')}</h2>
+          <p style={subtitleStyle}>{t('cd.residentTokens')}</p>
         </div>
       </header>
 
-      {state.state === 'error' && <div style={errorStyle}>Audit failed: {state.error}</div>}
+      {state.state === 'error' && <div style={errorStyle}>{t('cd.errorDetail', { error: state.error ?? '' })}</div>}
 
-      {report === null && state.state !== 'error' ? <div style={emptyStyle}>{state.state === 'loading' ? 'Auditing context…' : 'No audit data yet.'}</div> : report !== null && <>
+      {report === null && state.state !== 'error' ? <div style={emptyStyle}>{state.state === 'loading' ? t('cd.loading') : t('cd.empty')}</div> : report !== null && <>
         <div style={summaryStyle}>
           <div style={gaugeColumnStyle}>
             <div style={gaugeWrapStyle}>
               <BudgetRing percent={percent} color={accent} />
               <div style={gaugeCaptionStyle}>
                 <strong style={{ color: accent, fontSize: 37, fontWeight: 460 }}>{Math.round(Math.min(percent, 1) * 100)}%</strong>
-                <span style={gaugeGuideStyle}>of 50k</span>
+                <span style={gaugeGuideStyle}>{t('cd.guideline')}</span>
               </div>
             </div>
-            <span style={totalLabelStyle}>Total</span>
+            <span style={totalLabelStyle}>{t('cd.total')}</span>
             <strong style={totalStyle}>{formatK(resident)}</strong>
-            <span style={tokensStyle}>tokens</span>
+            <span style={tokensStyle}>{t('cd.tokens')}</span>
           </div>
           <div style={metricsStyle}>
-            <MetricRow type="instructions" label="Instruction chain" value={instructions} ratio={resident === 0 ? 0 : instructions / resident} color={TONE.mint} />
-            <MetricRow type="skills" label="Skills catalog" value={skills} ratio={resident === 0 ? 0 : skills / resident} color={TONE.mint} />
-            <MetricRow type="tools" label="Tool schemas" value={schemas} ratio={resident === 0 ? 0 : schemas / resident} color={TONE.amber} />
-            <MetricRow type="mcp" label="MCP tools" value={report.injected.tools.mcp.totalTokens} ratio={resident === 0 ? 0 : report.injected.tools.mcp.totalTokens / resident} color={TONE.mint} />
+            <MetricRow type="instructions" label={t('cd.instructions')} value={instructions} ratio={resident === 0 ? 0 : instructions / resident} color={TONE.mint} />
+            <MetricRow type="skills" label={t('cd.skills')} value={skills} ratio={resident === 0 ? 0 : skills / resident} color={TONE.mint} />
+            <MetricRow type="tools" label={t('cd.tools')} value={schemas} ratio={resident === 0 ? 0 : schemas / resident} color={TONE.amber} />
+            <MetricRow type="mcp" label={t('cd.mcp')} value={report.injected.tools.mcp.totalTokens} ratio={resident === 0 ? 0 : report.injected.tools.mcp.totalTokens / resident} color={TONE.mint} />
           </div>
         </div>
 
@@ -180,17 +180,17 @@ export function ContextAuditRing(props: ContextAuditRingProps): ReactElement {
           <span style={{ color: accent, display: 'inline-flex' }}><CheckIcon /></span>
           <div>
             <strong style={{ ...healthTitleStyle, color: accent }}>{status}</strong>
-            <p style={healthCopyStyle}>{suggestions.length ? 'Some context entries are worth reviewing before they become expensive.' : 'Your context is efficient and remains within the recommended budget.'}</p>
+            <p style={healthCopyStyle}>{suggestions.length ? t('cd.reviewHint') : t('cd.healthyHint')}</p>
           </div>
         </div>
 
         {suggestions.length > 0 && <div style={suggestionsStyle}>
-          <h3 style={suggestionsTitleStyle}>Suggestions</h3>
+          <h3 style={suggestionsTitleStyle}>{t('cd.suggestions', { n: suggestions.length })}</h3>
           <ol style={suggestionListStyle}>{suggestions.slice(0, 3).map((suggestion, index) => {
             const tone = suggestion.severity === 'high' ? TONE.red : suggestion.severity === 'medium' ? TONE.amber : TONE.mint
             return <li key={`${suggestion.severity}-${suggestion.text}`} style={suggestionStyle}>
               <span style={{ ...suggestionIndexStyle, color: tone, borderColor: tone }}>{index + 1}</span>
-              <span style={suggestionCopyStyle}><strong style={{ color: tone, fontWeight: 520 }}>Review audit finding</strong><small>{suggestion.text}</small></span>
+              <span style={suggestionCopyStyle}><strong style={{ color: tone, fontWeight: 520 }}>{t('cd.auditFinding')}</strong><small>{suggestion.text}</small></span>
               <span aria-hidden="true" style={arrowStyle}>›</span>
             </li>
           })}</ol>
@@ -198,8 +198,8 @@ export function ContextAuditRing(props: ContextAuditRingProps): ReactElement {
       </>}
 
       <footer style={footerStyle}>
-        <span style={updatedStyle}>Last updated: {updatedLabel(state.refreshedAt)}</span>
-        <button type="button" onClick={refresh} disabled={state.state === 'loading'} style={refreshStyle}><RefreshIcon />Refresh</button>
+        <span style={updatedStyle}>{t('cd.updated')}: {updatedLabel(state.refreshedAt, t)}</span>
+        <button type="button" onClick={refresh} disabled={state.state === 'loading'} style={refreshStyle}><RefreshIcon />{t('cd.refresh')}</button>
       </footer>
     </section>}
   </span>
