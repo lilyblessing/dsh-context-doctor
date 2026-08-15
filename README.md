@@ -190,9 +190,10 @@ node --test 'tests/*.test.ts'  # node --test（Node ≥ 22.19，原生 TS 支持
 
 测试 25 个用例：token 估算、重复块/描述检测、rank shadow、MCP 分组、指令链端到端（真实临时文件系统 + fake FileSystem）、插件入口与完整 execute 报告链路、会话工作目录路由、HTTP 路由（方法检查 + 真实审计响应 + 缓存上限淘汰）、headless 无 httpServer 环境。
 
-## 已知限制（v0.5.1）
+## 已知限制（v0.5.2）
 
 - 原生替代 DSH 上下文计量控件注册在 `conversation.input.left` 插槽（DSH 0.1.0-rc.5+ 均存在；v0.5.0 曾误用不存在的 `conversation.input.context`，UI 不显示）。未含该插槽的 DSH 版本仍可使用 `context_audit` 工具，但不会显示此 UI。
+- v0.5.2 起审计走 **agent 视图**（`session=<id>` 时经 `agents.get` 解析活跃 agent 作 scope，技能/工具/MCP 统计与模型真实可见一致）；无会话上下文（headless/无 session 参数）时回退全局视图（不含 scope 层技能与 MCP 工具）。
 - 指令链重复检测只做"完全相同的段落块"，不做语义相似度；跨文件引用同一事实的不同表述暂不识别。
 - MCP 工具 schema 按 `name + description` 估算，未计入 JSON Schema 参数细节。
 - 技能正文统计默认关闭（加载正文有成本），catalog 摘要成本始终统计。

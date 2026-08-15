@@ -21,7 +21,7 @@ export type { AuditReport } from './audit.ts'
 export { buildSuggestions, rankOfSource, renderReport } from './audit.ts'
 
 export const name = 'context-doctor'
-export const inject = ['fs', 'skills', 'tools', 'sessions'] as const
+export const inject = ['fs', 'skills', 'tools', 'sessions', 'agents'] as const
 
 /** 插件配置。 */
 export interface Config {
@@ -92,6 +92,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   const routes = makeAuditRoutes({
     deps,
     sessions: ctx.sessions as never,
+    agents: ctx.agents as never,
     ...(config.defaultCwd !== undefined ? { defaultCwd: config.defaultCwd } : {}),
     ...(config.cacheTtlMs !== undefined ? { cacheTtlMs: config.cacheTtlMs } : {}),
   })

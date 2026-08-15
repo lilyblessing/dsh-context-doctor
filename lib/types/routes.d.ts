@@ -17,6 +17,20 @@ export interface AuditRoutesConfig {
             };
         } | undefined;
     };
+    /**
+     * Agent 注册表：`session=<id>` 时解析该会话的活跃 agent 作为审计 scope，
+     * 使技能/工具统计落在模型真实可见的 agent 视图（含 MCP 工具与 scope 层技能）。
+     * 缺省时回退全局视图（无 MCP 工具、无 scope 层技能）。
+     */
+    agents?: {
+        get(id: string): {
+            session?: {
+                header?: {
+                    cwd?: string;
+                };
+            };
+        } | undefined;
+    };
     /** 默认审计目录（cwd/session 参数都缺省时使用）。 */
     defaultCwd?: string;
     /** 结果缓存时长（毫秒）。默认 60s。 */

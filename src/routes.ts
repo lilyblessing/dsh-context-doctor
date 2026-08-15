@@ -19,6 +19,12 @@ export interface AuditRoutesConfig {
    * 缺省时回退 defaultCwd / process.cwd()。
    */
   sessions?: { get(id: string): { header: { cwd?: string } } | undefined }
+  /**
+   * Agent 注册表：`session=<id>` 时解析该会话的活跃 agent 作为审计 scope，
+   * 使技能/工具统计落在模型真实可见的 agent 视图（含 MCP 工具与 scope 层技能）。
+   * 缺省时回退全局视图（无 MCP 工具、无 scope 层技能）。
+   */
+  agents?: { get(id: string): { session?: { header?: { cwd?: string } } } | undefined }
   /** 默认审计目录（cwd/session 参数都缺省时使用）。 */
   defaultCwd?: string
   /** 结果缓存时长（毫秒）。默认 60s。 */
@@ -62,6 +68,20 @@ function resolveCwd(
   return config.defaultCwd ?? process.cwd()
 }
 
+/** 解析审计 scope：session=<id> 时取该会话的活跃 agent（dsh-hud 同款姿势）。 */
+function resolveAgent(
+  url: string,
+  config: Pick<AuditRoutesConfig, 'agents'>,
+): unknown {
+  const sessionId = parseQueryParam(url, 'session')
+  if (sessionId === undefined || sessionId === '') return undefined
+  try {
+    return config.agents?.get(sessionId)
+  } catch {
+    return undefined
+  }
+}
+
 /** 构造审计路由（含 60s 缓存与 in-flight 复用）。 */
 export function makeAuditRoutes(config: AuditRoutesConfig): WebRoute[] {
   const { deps, cacheTtlMs = 60_000 } = config
@@ -69,20 +89,22 @@ export function makeAuditRoutes(config: AuditRoutesConfig): WebRoute[] {
   /** 缓存条目上限：防止不同 cwd 参数让缓存无限增长（超限时淘汰最旧条目）。 */
   const MAX_CACHE_ENTRIES = 32
 
-  const audit = (cwd: string): Promise<AuditReport> => {
-    const hit = cache.get(cwd)
+  const audit = (cwd: string, agent: unknown): Promise<AuditReport> => {
+    // agent 视图（scope 层技能/MCP 工具）随会话变化，缓存键须区分会话。
+    const key = agent === undefined ? cwd : `${cwd}::agent`
+    const hit = cache.get(key)
     if (hit !== undefined && Date.now() - hit.at < cacheTtlMs) return hit.promise
     if (cache.size >= MAX_CACHE_ENTRIES) {
       const oldest = cache.keys().next().value
       if (oldest !== undefined) cache.delete(oldest)
     }
-    const promise = runAudit(deps, { cwd, signal: new AbortController().signal })
+    const promise = runAudit(deps, { cwd, signal: new AbortController().signal, agent })
       .catch((error: unknown) => {
         // 失败不缓存，允许下次重试
-        cache.delete(cwd)
+        cache.delete(key)
         throw error
       })
-    cache.set(cwd, { at: Date.now(), promise })
+    cache.set(key, { at: Date.now(), promise })
     return promise
   }
 
@@ -95,7 +117,8 @@ export function makeAuditRoutes(config: AuditRoutesConfig): WebRoute[] {
         return
       }
       const cwd = resolveCwd(req.url ?? '', config)
-      audit(cwd).then(
+      const agent = resolveAgent(req.url ?? '', config)
+      audit(cwd, agent).then(
         (report) => json(res, 200, { ok: true, report }),
         (error: unknown) => json(res, 500, {
           ok: false,

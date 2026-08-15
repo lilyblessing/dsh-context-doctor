@@ -105,7 +105,13 @@ export async function runAudit(deps: AuditDeps, options: AuditOptions): Promise<
   const { cwd, signal } = options
 
   // skills.list 只调一次：技能目录统计与冲突检测共用同一份列表。
-  const skillList = await skills.list({ cwd, signal })
+  // 有 agent 时传入 scope，使统计落在模型真实可见的 agent 视图
+  // （无 agent 时回退全局层，如 headless 环境）。
+  const skillList = await skills.list({
+    cwd,
+    signal,
+    ...(options.agent !== undefined ? { scope: options.agent as never } : {}),
+  })
 
   const [instructions, skillCatalog, toolSchemas] = await Promise.all([
     scanInstructionChain(fs, cwd, signal),
@@ -121,7 +127,11 @@ export async function runAudit(deps: AuditDeps, options: AuditOptions): Promise<
     let totalTokens = 0
     for (const summary of skillList.slice(0, max)) {
       try {
-        const def = await skills.get(summary.name, { cwd, signal })
+        const def = await skills.get(summary.name, {
+          cwd,
+          signal,
+          ...(options.agent !== undefined ? { scope: options.agent as never } : {}),
+        })
         if (def !== undefined) {
           count++
           totalTokens += estimateTokens(def.content)

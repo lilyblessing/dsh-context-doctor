@@ -9,7 +9,7 @@ import Schema from '@deepseek-ai/schemastery';
 export type { AuditReport } from './audit.ts';
 export { buildSuggestions, rankOfSource, renderReport } from './audit.ts';
 export declare const name = "context-doctor";
-export declare const inject: readonly ['fs', 'skills', 'tools', 'sessions'];
+export declare const inject: readonly ['fs', 'skills', 'tools', 'sessions', 'agents'];
 /** 插件配置。 */
 export interface Config {
     /** 审计默认目录（浏览器面板不带 cwd 参数时使用；缺省为进程启动目录）。 */
