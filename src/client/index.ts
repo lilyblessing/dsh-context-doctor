@@ -29,9 +29,9 @@ export function apply(ctx: ClientContext): void {
 
   const store = createAuditStore()
 
-  ctx.slots.inject('conversation.input.context', () =>
+  ctx.slots.inject('conversation.input.left', () =>
     ctx.slots.register({
-      name: 'conversation.input.context',
+      name: 'conversation.input.left',
       store,
       locale: NS,
     }, ContextAuditRing))

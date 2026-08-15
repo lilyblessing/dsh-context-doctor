@@ -12,7 +12,7 @@ import type { createAuditStore } from './store.ts'
 import { NS } from './locales.ts'
 
 export type ContextAuditRingProps =
-  PropsRuntime<'conversation.input.context'>
+  PropsRuntime<'conversation.input.left'>
   & PropsStore<ReturnType<typeof createAuditStore>>
   & PropsLocale<typeof NS>
 
