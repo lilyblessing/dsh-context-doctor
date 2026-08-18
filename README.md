@@ -12,7 +12,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License BSD-3-Clause" src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg?style=for-the-badge"></a>
-  <a href="https://github.com/Zhenyu98/dsh-context-doctor/releases"><img alt="Version 0.5.0" src="https://img.shields.io/badge/Version-0.5.0-green.svg?style=for-the-badge"></a>
+  <a href="https://github.com/lilyblessing/dsh-context-doctor/releases"><img alt="Version 0.5.2" src="https://img.shields.io/badge/Version-0.5.2-green.svg?style=for-the-badge"></a>
   <a href="https://github.com/deepseek-ai/awesome-deepseek-agent"><img alt="For DeepSeek Harness" src="https://img.shields.io/badge/For-DeepSeek%20Harness-8257D0.svg?style=for-the-badge"></a>
 </p>
 
@@ -33,6 +33,20 @@
 <p align="center">
   <sub>Context Doctor renders in English with a restrained mono interface; the surrounding DSH shell follows its selected light, dark, or system theme.</sub>
 </p>
+
+## 本 fork 相对上游的改动（Changes vs upstream）
+
+个人 fork（[lilyblessing/dsh-context-doctor](https://github.com/lilyblessing/dsh-context-doctor)）
+在 [Zhenyu98/dsh-context-doctor](https://github.com/Zhenyu98/dsh-context-doctor) 基础上修复了以下问题，
+完整版本记录见 [CHANGELOG](./CHANGELOG.md)：
+
+- **打包崩溃修复**：node 半区构建保持 `@deepseek-ai/*` external，杜绝 bundle 内产生第二个
+  `TOOL_RUNTIME_SCHEDULER` Symbol 导致的工具调度崩溃。
+- **peerDependencies**：声明 `@deepseek-ai/dsh-tools` 为 peer（bundle 外置化），并收敛多余声明、补全 `exports[]`。
+- **面板插槽修复**：注册到 `conversation.input.left`（rc.5/6 无 `input.context`），面板才能真正显示。
+- **Config schema / slots id 补齐**（官方契约要求）。
+- **真中文 i18n** 面板文案（跟随 DSH 界面语言）。
+- **agent scope 审计**：技能 / 工具 / MCP 统计与模型真实可见一致。
 
 ## Why
 
